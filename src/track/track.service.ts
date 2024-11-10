@@ -60,4 +60,20 @@ export class TrackService {
     const index = this.trackRepository.findIndex((it) => it.id === track.id);
     this.trackRepository.splice(index, 1);
   }
+
+  invalidateAlbum(albumId: string): void {
+    this.trackRepository.forEach((it) => {
+      if (it.albumId === albumId) {
+        it.albumId = null;
+      }
+    });
+  }
+
+  invalidateArtist(artistId: string): void {
+    this.trackRepository.forEach((it) => {
+      if (it.artistId === artistId) {
+        it.artistId = null;
+      }
+    });
+  }
 }
