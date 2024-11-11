@@ -5,6 +5,7 @@ import { Artist } from './entities/artist.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { TrackService } from '../track/track.service';
 import { AlbumService } from '../album/album.service';
+import { map, selectFromMap } from '../utils/common';
 
 @Injectable()
 export class ArtistService {
@@ -32,20 +33,25 @@ export class ArtistService {
     return this.artistRepository;
   }
 
-  findOne(id: string): Artist {
+  findOne(id: string, status = HttpStatus.NOT_FOUND): Artist {
     const artist = this.artistRepository.find((it) => it.id === id);
 
     if (!artist) {
       throw new HttpException(
         {
-          status: HttpStatus.NOT_FOUND,
-          error: 'Artist with this id does not exist',
+          status,
+          error: `Artist with such id = ${id} does not exist`,
         },
-        HttpStatus.NOT_FOUND,
+        status,
       );
     }
 
     return artist;
+  }
+
+  findMany(ids: string[]): Artist[] {
+    const artistMap = map(this.artistRepository, (it) => it.id);
+    return selectFromMap(ids, artistMap);
   }
 
   update(id: string, dto: UpdateArtistDto): Artist {

@@ -36,7 +36,7 @@ export class UserService {
       throw new HttpException(
         {
           status: HttpStatus.NOT_FOUND,
-          error: 'User with this id does not exist',
+          error: `User with id = ${id} does not exist`,
         },
         HttpStatus.NOT_FOUND,
       );

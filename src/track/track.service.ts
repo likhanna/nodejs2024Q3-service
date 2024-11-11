@@ -3,6 +3,7 @@ import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { Track } from './entities/track.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { map, selectFromMap } from '../utils/common';
 
 @Injectable()
 export class TrackService {
@@ -27,20 +28,25 @@ export class TrackService {
     return this.trackRepository;
   }
 
-  findOne(id: string) {
+  findOne(id: string, status = HttpStatus.NOT_FOUND) {
     const track = this.trackRepository.find((it) => it.id === id);
 
     if (!track) {
       throw new HttpException(
         {
-          status: HttpStatus.NOT_FOUND,
-          error: 'Track with this id does not exist',
+          status,
+          error: `Track with id = ${id} does not exist`,
         },
-        HttpStatus.NOT_FOUND,
+        status,
       );
     }
 
     return track;
+  }
+
+  findMany(ids: string[]): Track[] {
+    const trackMap = map(this.trackRepository, (it) => it.id);
+    return selectFromMap(ids, trackMap);
   }
 
   update(id: string, dto: UpdateTrackDto): Track {
