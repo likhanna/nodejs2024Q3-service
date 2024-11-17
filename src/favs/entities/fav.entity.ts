@@ -6,6 +6,8 @@ export class Fav {
 
   @IsUUID('4', { each: true })
   albums: string[];
+
+  @IsUUID('4', { each: true })
   tracks: string[];
 
   constructor(partial: Partial<Fav>) {
