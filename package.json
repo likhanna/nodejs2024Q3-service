@@ -20,7 +20,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "scan": "docker scout cves"
+    "scan": "docker scout cves",
+    "scan:db": "docker scout cves postgres:latest"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.8",
