@@ -2,79 +2,135 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { Album } from './entities/album.entity';
-import { v4 as uuidv4 } from 'uuid';
 import { TrackService } from '../track/track.service';
-import { map, selectFromMap } from '../utils/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class AlbumService {
-  private readonly albumRepository: Album[] = [];
+  constructor(
+    @InjectRepository(Album) private albumRepository: Repository<Album>,
+    private readonly trackService: TrackService,
+  ) {}
 
-  constructor(private readonly trackService: TrackService) {}
-
-  create(dto: CreateAlbumDto): Album {
+  async create(dto: CreateAlbumDto): Promise<Album> {
     const { name, artistId, year } = dto;
 
-    const newAlbum = new Album({
-      id: uuidv4(),
+    const newAlbum = this.albumRepository.create({
       name,
       artistId,
       year,
     });
 
-    this.albumRepository.push(newAlbum);
+    await this.albumRepository.save(newAlbum);
+
     return newAlbum;
   }
 
-  findAll(): Album[] {
-    return this.albumRepository;
+  async findAll(): Promise<Album[]> {
+    const albums = this.albumRepository.find();
+
+    return albums;
   }
 
-  findOne(id: string, status = HttpStatus.NOT_FOUND): Album {
-    const album = this.albumRepository.find((it) => it.id === id);
+  async findOne(id: string): Promise<Album> {
+    const album = await this.albumRepository.findOne({ where: { id } });
 
     if (!album) {
       throw new HttpException(
         {
-          status,
-          error: `Artist with id = ${id} does not exist`,
+          status: HttpStatus.NOT_FOUND,
+          error: `Artist with such id = ${id} does not exist`,
         },
-        status,
+        HttpStatus.NOT_FOUND,
       );
     }
 
     return album;
   }
 
-  findMany(ids: string[]): Album[] {
-    const albumMap = map(this.albumRepository, (it) => it.id);
-    return selectFromMap(ids, albumMap);
+  async findMany(ids: string[]): Promise<Album[]> {
+    const albums = await this.albumRepository.findBy({ id: In(ids) });
+    return albums;
   }
 
-  update(id: string, dto: UpdateAlbumDto): Album {
+  async getFavorites(): Promise<Album[]> {
+    const albums = await this.albumRepository.find({
+      where: { isFavorite: true },
+    });
+    return albums;
+  }
+
+  async setFavorite(albumId: string, action: 'add' | 'remove'): Promise<void> {
+    switch (action) {
+      case 'remove': {
+        const album = await this.albumRepository.findOne({
+          where: { id: albumId, isFavorite: true },
+        });
+
+        if (!album) {
+          throw new HttpException(
+            {
+              status: HttpStatus.NOT_FOUND,
+              error: `Album with such id = ${albumId} does not exist in the favourites`,
+            },
+            HttpStatus.NOT_FOUND,
+          );
+        }
+
+        album.isFavorite = false;
+        await this.albumRepository.save(album);
+        break;
+      }
+
+      default: {
+        const album = await this.albumRepository.findOne({
+          where: { id: albumId },
+        });
+
+        if (!album) {
+          throw new HttpException(
+            {
+              status: HttpStatus.UNPROCESSABLE_ENTITY,
+              error: `Album with such albumId = ${albumId} does not exist`,
+            },
+            HttpStatus.UNPROCESSABLE_ENTITY,
+          );
+        }
+
+        album.isFavorite = true;
+        await this.albumRepository.save(album);
+        break;
+      }
+    }
+  }
+
+  async update(id: string, dto: UpdateAlbumDto): Promise<Album> {
     const { name, artistId, year } = dto;
-    const album = this.findOne(id);
+    const album = await this.findOne(id);
 
     album.name = name;
     album.artistId = artistId;
     album.year = year;
 
+    await this.albumRepository.save(album);
+
     return album;
   }
 
-  remove(id: string): void {
-    const album = this.findOne(id);
-    const index = this.albumRepository.findIndex((it) => it.id === album.id);
-    this.albumRepository.splice(index, 1);
+  async remove(id: string): Promise<void> {
+    const album = await this.findOne(id);
+    await this.albumRepository.delete({ id: album.id });
 
-    this.trackService.invalidateAlbum(id);
+    await this.trackService.invalidateAlbum(id);
   }
 
-  invalidateArtist(artistId: string): void {
-    this.albumRepository.forEach((it) => {
-      if (it.artistId === artistId) {
-        it.artistId = null;
-      }
-    });
+  async invalidateArtist(artistId: string): Promise<void> {
+    const album = await this.albumRepository.findOne({ where: { artistId } });
+
+    if (album) {
+      album.artistId = null;
+      await this.albumRepository.save(album);
+    }
   }
 }
