@@ -10,11 +10,12 @@ import 'dotenv/config';
 
 ConfigModule.forRoot();
 
-const { DB_HOST, DB_HOST_DOCKER, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } =
+const { DB_HOST, DB_HOST_DOCKER, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, PORT } =
   process.env;
 
 const url = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST_DOCKER}:${DB_PORT}/${DB_NAME}`;
 
+console.log('PORT:', PORT);
 console.log('DB_HOST:', DB_HOST);
 console.log('DB_HOST_DOCKER:', DB_HOST_DOCKER);
 console.log('DB_PORT:', DB_PORT);
@@ -37,3 +38,5 @@ export const databaseConfig: DataSourceOptions = {
   logging: true,
   migrationsRun: true,
 };
+
+console.log('Connecting to database with config:', databaseConfig);
