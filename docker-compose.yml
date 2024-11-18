@@ -1,0 +1,37 @@
+services:
+  app:
+    image: likhanna/nodejs2024q3-service-app:latest
+    environment:
+      - PORT=${PORT}
+    ports:
+      - '${PORT}:${PORT}'
+    depends_on:
+      - db
+    volumes:
+      - ./src:/home/node/src
+    restart: on-failure
+    networks:
+      - home-library
+
+  db:
+    container_name: postgres_container
+    image: postgres:latest
+    environment:
+      - POSTGRES_PORT=${DB_PORT}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - TZ=${TZ}
+      - PGTZ=${PGTZ}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - '${DB_PORT}:5432'
+    volumes:
+      - /var/lib/postgresql/data/pgdata
+    restart: always
+    networks:
+      - home-library
+
+networks:
+  home-library:
+    driver: bridge
