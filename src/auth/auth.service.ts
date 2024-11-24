@@ -38,7 +38,7 @@ export class AuthService {
 
   public async refreshToken(dto: RefreshTokenDto) {
     const { refreshToken } = dto;
-    console.log('refreshToken', refreshToken);
+
     try {
       await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env.JWT_SECRET_REFRESH_KEY,

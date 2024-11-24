@@ -10,8 +10,15 @@ import 'dotenv/config';
 
 ConfigModule.forRoot();
 
-const { DB_HOST, DB_HOST_DOCKER, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, PORT } =
-  process.env;
+const {
+  DB_HOST,
+  DB_HOST_DOCKER,
+  DB_PORT,
+  DB_USER,
+  DB_PASSWORD,
+  DB_NAME,
+  PORT,
+} = process.env;
 
 const url = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST_DOCKER}:${DB_PORT}/${DB_NAME}`;
 
@@ -35,7 +42,7 @@ export const databaseConfig: DataSourceOptions = {
   entities: [User, Artist, Album, Track],
   migrations: [Migration1731850241045],
   synchronize: false,
-  logging: true,
+  // logging: true,
   migrationsRun: true,
 };
 
