@@ -5,6 +5,9 @@ import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import * as bcrypt from 'bcrypt';
+import 'dotenv/config';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -15,9 +18,14 @@ export class UserService {
     const { login, password } = dto;
     const now = Date.now();
 
+    const hashedPassword = await bcrypt.hash(
+      password,
+      Number(process.env.CRYPT_SALT) || 10,
+    );
+
     const newUser = this.userRepository.create({
       login: login,
-      password: password,
+      password: hashedPassword,
       version: 1,
       createdAt: now,
       updatedAt: now,
@@ -50,11 +58,18 @@ export class UserService {
     return user;
   }
 
+  async findOneByLogin(login: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { login } });
+    return user;
+  }
+
   async update(id: string, dto: UpdatePasswordDto): Promise<User> {
     const { oldPassword, newPassword } = dto;
     const user = await this.findOne(id);
 
-    if (user.password !== oldPassword) {
+    const isPasswordMatching = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isPasswordMatching) {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,

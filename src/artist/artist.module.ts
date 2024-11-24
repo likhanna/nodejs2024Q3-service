@@ -5,9 +5,15 @@ import { TrackModule } from '../track/track.module';
 import { AlbumModule } from '../album/album.module';
 import { Artist } from './entities/artist.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Artist]), TrackModule, AlbumModule],
+  imports: [
+    TypeOrmModule.forFeature([Artist]),
+    TrackModule,
+    AlbumModule,
+    AuthModule,
+  ],
   controllers: [ArtistController],
   providers: [ArtistService],
   exports: [ArtistService],

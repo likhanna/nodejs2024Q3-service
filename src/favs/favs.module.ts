@@ -8,6 +8,7 @@ import { Album } from '../album/entities/album.entity';
 import { Track } from '../track/entities/track.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Artist } from '../artist/entities/artist.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Artist } from '../artist/entities/artist.entity';
     ArtistModule,
     AlbumModule,
     TrackModule,
+    AuthModule,
   ],
   controllers: [FavsController],
   providers: [FavsService],
