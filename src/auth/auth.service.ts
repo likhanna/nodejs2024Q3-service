@@ -1,10 +1,18 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { JwtPayload } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { decode } from 'jsonwebtoken';
 
 import 'dotenv/config';
 
@@ -26,6 +34,27 @@ export class AuthService {
     const payload: JwtPayload = { userId: user.id, login: user.login };
     const tokens = this.generateTokens(payload);
     return { ...payload, ...tokens };
+  }
+
+  public async refreshToken(dto: RefreshTokenDto) {
+    const { refreshToken } = dto;
+    console.log('refreshToken', refreshToken);
+    try {
+      await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_SECRET_REFRESH_KEY,
+        maxAge: process.env.TOKEN_REFRESH_EXPIRE_TIME,
+      });
+
+      const payload = decode(refreshToken, { json: true });
+      const tokens = this.generateTokens({
+        userId: payload.userId,
+        login: payload.login,
+      });
+
+      return { ...payload, ...tokens };
+    } catch (err) {
+      throw new ForbiddenException('Wrong credentials provided');
+    }
   }
 
   private async verifyPassword(
@@ -82,10 +111,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      throw new HttpException(
-        'Wrong credentials provided',
-        HttpStatus.FORBIDDEN,
-      );
+      throw new UnauthorizedException('Wrong credentials provided');
     }
   }
 
